@@ -25,4 +25,24 @@ public class MovieService : IMovieService
         await _context.SaveChangesAsync();
         return movie;
     }
+
+    public async Task<Movie?> UpdateMovieAsync(Movie movie)
+    {
+        if (movie == null || movie.Id <= 0)
+        {
+            return null;
+        }
+
+        var existing = await _context.Movies.FindAsync(movie.Id);
+        if (existing == null)
+        {
+            return null;
+        }
+
+        existing.Title = movie.Title;
+        existing.Year = movie.Year;
+
+        await _context.SaveChangesAsync();
+        return existing;
+    }
 }
