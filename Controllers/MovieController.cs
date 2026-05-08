@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using SwiftMoviesApi.Models;
+using SwiftMoviesApi.Services.Interfaces;
 using System.Collections.Generic;
 
 namespace SwiftMoviesApi.Controllers;
@@ -8,18 +9,29 @@ namespace SwiftMoviesApi.Controllers;
 [Route("api/[controller]")]
 public class MovieController : ControllerBase
 {
-    [HttpGet]
-    public IActionResult Get()
-    {
-        var movies = new List<Movie>
-        {
-            new Movie { Id = 1, Title = "Inception", Year = 2010 },
-            new Movie { Id = 2, Title = "The Matrix", Year = 1999 },
-            new Movie { Id = 3, Title = "Interstellar", Year = 2014 },
-            new Movie { Id = 4, Title = "The Dark Knight", Year = 2008 },
-            new Movie { Id = 5, Title = "Parasite", Year = 2019 }
-        };
+    private readonly IMovieService _movieService;
 
+    public MovieController(IMovieService movieService)
+    {
+        _movieService = movieService;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Get()
+    {
+        var movies = await _movieService.GetMoviesAsync();
         return Ok(movies);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Post([FromBody] Movie movie)
+    {
+        if (movie == null)
+        {
+            return BadRequest("Movie data is required");
+        }
+
+        var addedMovie = await _movieService.AddMovieAsync(movie);
+        return CreatedAtAction(nameof(Get), new { }, addedMovie);
     }
 }
