@@ -54,4 +54,21 @@ public class MovieController : ControllerBase
 
         return Ok(updatedMovie);
     }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteMovie(int id)
+    {
+        if (id <= 0)
+        {
+            return BadRequest("A valid movie ID is required.");
+        }
+
+        var deleted = await _movieService.DeleteMovieAsync(id);
+        if (!deleted)
+        {
+            return NotFound($"Movie with ID {id} was not found.");
+        }
+
+        return NoContent();
+    }
 }
