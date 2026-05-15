@@ -23,6 +23,23 @@ public class MovieController : ControllerBase
         return Ok(movies);
     }
 
+    [HttpGet("{id}")]
+    public async Task<IActionResult> GetMovie(int id)
+    {
+        if (id <= 0)
+        {
+            return BadRequest("A valid movie ID is required.");
+        }
+
+        var movie = await _movieService.GetMovieByIdAsync(id);
+        if (movie == null)
+        {
+            return NotFound($"Movie with ID {id} was not found.");
+        }
+
+        return Ok(movie);
+    }
+
     [HttpPost]
     public async Task<IActionResult> InsertMovie([FromBody] Movie movie)
     {
@@ -38,18 +55,21 @@ public class MovieController : ControllerBase
         return CreatedAtAction(nameof(Get), new { }, addedMovie);
     }
 
-    [HttpPost("update")]
-    public async Task<IActionResult> UpdateMovie([FromBody] Movie movie)
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateMovie(int id, [FromBody] Movie movie)
     {
-        if (movie == null || movie.Id <= 0)
+        if (movie == null || id <= 0)
         {
             return BadRequest("A valid movie ID is required for update.");
         }
 
+        // Set the movie ID from the route parameter
+        movie.Id = id;
+
         var updatedMovie = await _movieService.UpdateMovieAsync(movie);
         if (updatedMovie == null)
         {
-            return NotFound($"Movie with ID {movie.Id} was not found.");
+            return NotFound($"Movie with ID {id} was not found.");
         }
 
         return Ok(updatedMovie);
