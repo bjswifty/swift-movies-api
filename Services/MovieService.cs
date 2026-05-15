@@ -19,6 +19,11 @@ public class MovieService : IMovieService
         return await _context.Movies.ToListAsync();
     }
 
+    public async Task<Movie?> GetMovieByIdAsync(int id)
+    {
+        return await _context.Movies.FindAsync(id);
+    }
+
     public async Task<Movie> AddMovieAsync(Movie movie)
     {
         _context.Movies.Add(movie);
