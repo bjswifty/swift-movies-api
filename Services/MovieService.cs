@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using SwiftMoviesApi.Data;
 using SwiftMoviesApi.Models;
 using SwiftMoviesApi.Services.Interfaces;
@@ -8,15 +9,22 @@ namespace SwiftMoviesApi.Services;
 public class MovieService : IMovieService
 {
     private readonly AppDbContext _context;
+    private readonly IMemoryCache _cache;
+    private const string MovieListCacheKey = "MovieList";
 
-    public MovieService(AppDbContext context)
+    public MovieService(AppDbContext context, IMemoryCache cache)
     {
         _context = context;
+        _cache = cache;
     }
 
     public async Task<IEnumerable<Movie>> GetMoviesAsync()
     {
-        return await _context.Movies.ToListAsync();
+        return await _cache.GetOrCreateAsync(MovieListCacheKey, async entry =>
+        {
+            entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5);
+            return await _context.Movies.ToListAsync();
+        });
     }
 
     public async Task<Movie?> GetMovieByIdAsync(int id)
@@ -28,6 +36,7 @@ public class MovieService : IMovieService
     {
         _context.Movies.Add(movie);
         await _context.SaveChangesAsync();
+        InvalidateMovieListCache();
         return movie;
     }
 
@@ -48,6 +57,7 @@ public class MovieService : IMovieService
         existing.Year = movie.Year;
 
         await _context.SaveChangesAsync();
+        InvalidateMovieListCache();
         return existing;
     }
 
@@ -61,6 +71,12 @@ public class MovieService : IMovieService
 
         _context.Movies.Remove(movie);
         await _context.SaveChangesAsync();
+        InvalidateMovieListCache();
         return true;
+    }
+
+    private void InvalidateMovieListCache()
+    {
+        _cache.Remove(MovieListCacheKey);
     }
 }
